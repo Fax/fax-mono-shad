@@ -104,13 +104,16 @@ public class Game1 : Game
     public bool prev_p = false;
     protected override void Update(GameTime gameTime)
     {
+        if (!IsActive) return;
         var k = Keyboard.GetState();
         var m = Mouse.GetState();
         if (m.LeftButton == ButtonState.Pressed)
         {
             Console.WriteLine("Click");
         }
+
         inputManager.Update(k, m);
+
         var c = k.IsKeyDown(Keys.P);
         if (c != prev_p && c)
         {
@@ -193,7 +196,7 @@ public class Game1 : Game
 
         // TODO: Add your drawing code here
         _spriteBatch.Begin();
-        player.Draw(_spriteBatch, inputManager, textureManager.GetTexture("player"));
+        player.DebugDraw(_spriteBatch, inputManager, textureManager.GetTexture("player"));
         playerRenderer.Render(player, Color.LawnGreen);
         foreach (var b in bullets)
         {

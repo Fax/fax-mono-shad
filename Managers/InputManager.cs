@@ -19,6 +19,7 @@ public record InputState
     public bool MiddleHold = false;
 
     public bool Shoot = false;
+    public bool Dash = false;
 
     public Point MousePosition;
 }
@@ -30,6 +31,7 @@ public class InputManager
 
     public void Update(KeyboardState state, MouseState mouseState)
     {
+        
         current.Up = state.IsKeyDown(Keys.Up) || state.IsKeyDown(Keys.W);
         current.Down = state.IsKeyDown(Keys.Down) || state.IsKeyDown(Keys.S);
         current.Left = state.IsKeyDown(Keys.Left) || state.IsKeyDown(Keys.A);
@@ -46,8 +48,8 @@ public class InputManager
         current.RightHold = current.RightHold && previous.RightHold;
         current.MiddleHold = current.MiddleHold && previous.MiddleHold;
         current.MousePosition = mouseState.Position;
-        current.Shoot = (current.LeftClick && !current.LeftHold) || current.SpacePulse;
-        
+        current.Shoot = (current.LeftClick && !current.LeftHold);
+        current.Dash = current.SpacePulse;
 
         previous = current with { };
     }
