@@ -5,7 +5,8 @@ using Microsoft.Xna.Framework;
 public class EnemyEntity
 {
     public readonly int EntityId = IdManager.NextId();
-    public float Life = 2.0f;
+    public float Life = 8.0f;
+    public float MaxLife = 10.0f;
     public Vector2 Size = new(30f);
     public Color Color = Color.Red;
     public float Speed = 25.0f;

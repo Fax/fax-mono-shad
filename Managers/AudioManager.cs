@@ -1,6 +1,4 @@
-// To be reimplemented without OpenAL
 
-// I am making it static so I can just call it from wherever I need it.
 using System.Diagnostics;
 using Microsoft.Xna.Framework.Audio;
 
@@ -16,8 +14,7 @@ public static class Sfx
     static byte[] plingBuffer;
     static DynamicSoundEffectInstance plingSound;
 
-    // Init the current device. the int[]null thing is a trial and error as I have no idea what to pass as flags.
-    // I need to read the docs.
+    
     public static void Init()
     {
         shootBuffer = SoundGenerator.GenerateShootSound();

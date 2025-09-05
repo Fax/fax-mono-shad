@@ -29,6 +29,8 @@ public class PickupRenderer
            SpriteEffects.None,
            0);
 
+        
+
     }
 
 

@@ -16,7 +16,7 @@ public enum PlayerMovementState
 
 public class Player
 {
-    
+
 
     public int Score = 0;
     public int Experience = 0;
@@ -60,7 +60,7 @@ public class Player
         // do not subscribe again
         if (weapon == null)
         {
-            weapon = new Weapon(_bus) { BulletType = evt.BulletType };
+            weapon = new Weapon(_bus) { CurrentBullet = BulletRegistry.Instance.RegisteredBullets.First() };
         }
     }
     public Vector2 Position = new Vector2(100, 100);
@@ -82,7 +82,7 @@ public class Player
 
     public void DebugDraw(SpriteBatch _spritebatch, InputManager inputManager, Texture2D texture)
     {
-        _spritebatch.Draw(texture, inputManager.current.MousePosition.ToVector2().ToRectangle(new Vector2(15f)), Color.DarkRed);
+        _spritebatch.Draw(texture, inputManager.current.MousePosition.ToRectangle(new Vector2(15f)), Color.DarkRed);
     }
 
     public void HandleNormal(InputManager inputManager, float dt, Vector2 aimDirection)
@@ -122,11 +122,11 @@ public class Player
 
     public void Update(InputManager inputManager, float dt)
     {
-        var mouse = inputManager.current.MousePosition.ToVector2();
+        var mouse = inputManager.current.MousePosition;
         var dirToMouse = (mouse - Position);
         var aimDir = dirToMouse == Vector2.Zero ? new Vector2(0f, -1f) : dirToMouse.Normalized();
         Rotation = MathF.Atan2(aimDir.X, -aimDir.Y);
-        
+
         // --- State machine ---
         switch (State)
         {
@@ -147,7 +147,7 @@ public class Player
         if (weapon != null)
         {
             if (inputManager.current.Shoot)
-                weapon.TryShoot(Position, dirToMouse, 250f);
+                weapon.TryShoot(Position, dirToMouse);
             weapon.Update(dt);
         }
     }

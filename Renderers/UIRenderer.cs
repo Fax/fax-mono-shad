@@ -5,6 +5,35 @@
 
 using Microsoft.Xna.Framework.Graphics;
 
+static class UIHelpers
+{
+    public static SpriteBatch _spriteBatch;
+    public static TextureManager _textureManager;
+
+    public static void Init(SpriteBatch s, TextureManager m)
+    {
+        _spriteBatch = s;
+        _textureManager = m;
+    }
+    public static void RenderHorizontalBar(Vector2 position, float lenght, float height, float filledPc, bool inverted = false)
+    {
+        Vector2 pos = position;
+        Vector2 siz = new(lenght, height);
+        var barRect = pos.ToRectangle(siz);
+        _spriteBatch.Draw(
+            _textureManager.GetTexture("bar"),
+            barRect,
+            Color.AliceBlue);
+        var pc = inverted ? 1 - filledPc : filledPc;
+        Vector2 sizFilled = new(lenght * pc, height);
+        var filledRec = pos.ToRectangle(sizFilled);
+        _spriteBatch.Draw(
+                    _textureManager.GetTexture("bar"),
+                    filledRec,
+                    Color.BlueViolet);
+    }
+}
+
 class UIRenderer
 {
     private Vector2 _screenSize;
@@ -24,23 +53,7 @@ class UIRenderer
     int lastStart = 0;
     int lastCap = 0;
 
-    public void RenderHorizontalBar(Vector2 position, float lenght, float height, float filledPc, bool inverted = false)
-    {
-        Vector2 pos = position;
-        Vector2 siz = new(lenght, height);
-        var barRect = pos.ToRectangle(siz);
-        _spriteBatch.Draw(
-            _textureManager.GetTexture("bar"),
-            barRect,
-            Color.AliceBlue);
-        var pc = inverted ? 1 - filledPc : filledPc;
-        Vector2 sizFilled = new(lenght * pc, height);
-        var filledRec = pos.ToRectangle(sizFilled);
-        _spriteBatch.Draw(
-                    _textureManager.GetTexture("bar"),
-                    filledRec,
-                    Color.BlueViolet);
-    }
+
 
     public void Render()
     {
@@ -59,14 +72,17 @@ class UIRenderer
         float end = lastCap - lastStart;
         float fillPc = ((exp - lastStart) / end);
 
-        RenderHorizontalBar(pos, _screenSize.X - 20, 10, fillPc);
+        UIHelpers.RenderHorizontalBar(pos, _screenSize.X - 20, 10, fillPc);
 
         Vector2 cooldownPosition = new(10, _screenSize.Y - 40);
         float cooldownLen = 100;
         float coolDownPerc = _player.DashCooldownCounter / _player.DashCooldown;
 
-        RenderHorizontalBar(cooldownPosition, cooldownLen, 10, coolDownPerc, inverted:true);
+        UIHelpers.RenderHorizontalBar(cooldownPosition, cooldownLen, 10, coolDownPerc, inverted: true);
 
+        Vector2 gunPosition = new(10, _screenSize.Y - 60);
 
+        var b = _player.weapon.CurrentBullet;
+        _spriteBatch.DrawString(_textureManager.GetFont(), $"{b.Label} S{b.BulletSpeed} C{b.Cooldown} D{b.Damage} F{b.Friction}", gunPosition, Color.Black);
     }
 }

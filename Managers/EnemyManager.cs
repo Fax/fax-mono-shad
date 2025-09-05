@@ -12,13 +12,29 @@ public class EnemyManager
         _bus = bus;
         Enemies = entities;
         _bus.Subscribe<BulletCollisionEvent>(BulletHit);
+        _bus.Subscribe<AreaCollisionEvent>(AreaDamageCollision);
+    }
+    public void AreaDamageCollision(AreaCollisionEvent e)
+    {
+        var enemyCollided = Enemies.FirstOrDefault(x => x.EntityId == e.CollisionEntityId);
+        if (enemyCollided == null) return;
+        enemyCollided.Life -= e.AreaDamage;
+        if (enemyCollided.Life > 0) return;
+        Kill(enemyCollided);
     }
     public void BulletHit(BulletCollisionEvent evt)
     {
         var enemyCollided = Enemies.FirstOrDefault(x => x.EntityId == evt.CollisionEntityId);
         if (enemyCollided == null) return;
-        enemyCollided.Active = false;
-        _bus.Publish<SpawnExperienceEvent>(new SpawnExperienceEvent(100, enemyCollided.Position));
+        enemyCollided.Life -= evt.BulletDamage;
+        if (enemyCollided.Life > 0) return;
+        Kill(enemyCollided);
+    }
+
+    private void Kill(EnemyEntity e)
+    {
+        e.Active = false;
+        _bus.Publish<SpawnExperienceEvent>(new SpawnExperienceEvent(100, e.Position));
         Sfx.PlayBoom();
     }
 

@@ -34,6 +34,13 @@ public class PickupEntity
 public class WeaponPickup : PickupEntity
 {
     public int BulletType = 0;
+    public WeaponPickup(Bullet bullet)
+    {
+        Size = new Vector2(10, 10);
+        RotationSpeed = 8.0f;
+        BulletType = bullet.BulletType;
+        Color = bullet.Color;
+    }
     public WeaponPickup(int weaponType)
     {
         BulletType = weaponType;

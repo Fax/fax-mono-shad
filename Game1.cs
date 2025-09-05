@@ -1,12 +1,16 @@
-﻿using System.Linq.Expressions;
-using Microsoft.Xna.Framework;
+﻿using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
+using MonoGame.Extended;
+using MonoGame.Extended.ViewportAdapters;
+using System.Linq.Expressions;
 
 namespace fax_mono_shad;
 
+
 public class Game1 : Game
 {
+
     private GraphicsDeviceManager _graphics;
     private SpriteBatch _spriteBatch;
 
@@ -21,9 +25,15 @@ public class Game1 : Game
     List<Bullet> bullets = new List<Bullet>();
 
     List<EnemyEntity> enemies = new List<EnemyEntity>();
+    AreaEffectManager areaEffectManager;
     EnemyManager enemyManager;
     EnemyRenderer enemyRenderer;
     BulletSpawner bulletSpawner;
+
+
+    // not currently hooked up as the "on shoot" event is not wired
+    BulletEcsManager bulletEcsManager;
+
     PickupSpawner pickupSpawner;
     PickupManager pickupManager;
     PickupRenderer pickupRenderer;
@@ -32,8 +42,12 @@ public class Game1 : Game
     CollisionManager collisionManager = new CollisionManager();
     List<PickupEntity> pickups = new();
     List<ExperienceEntity> nuggets = new();
-
+    BulletRegistry bulletRegistry = BulletRegistry.Instance;
     UIRenderer gui;
+
+
+    private OrthographicCamera _camera;
+
     private Vector2 _screenSize;
     private void UpdateScreenSize()
     {
@@ -62,7 +76,11 @@ public class Game1 : Game
     {
         // TODO: Add your initialization logic here
 
+
         base.Initialize();
+
+        var viewportAdapter = new BoxingViewportAdapter(Window, GraphicsDevice, 800, 480);
+        _camera = new OrthographicCamera(viewportAdapter);
     }
 
     protected override void LoadContent()
@@ -71,7 +89,8 @@ public class Game1 : Game
 
         Sfx.Init();
         inputManager = new();
-        textureManager = new(GraphicsDevice);
+        textureManager = new(GraphicsDevice, Content);
+        UIHelpers.Init(_spriteBatch, textureManager);
         UpdateScreenSize();
         Window.ClientSizeChanged += OnResize;
         textureManager.Initialize(new Dictionary<string, Color>
@@ -90,7 +109,11 @@ public class Game1 : Game
         player = new Player(eventBus) { Position = new(_screenSize.X / 2, _screenSize.Y / 2), weapon = new Weapon(eventBus), Level = 0, Experience = 0 };
         playerRenderer = new PlayerRenderer(_spriteBatch, textureManager);
         bulletRenderer = new BulletRenderer(_spriteBatch, textureManager);
+
         bulletSpawner = new BulletSpawner(eventBus, bullets);
+
+        bulletEcsManager = new BulletEcsManager(_spriteBatch, textureManager);
+
         pickupSpawner = new PickupSpawner(eventBus, pickups);
         pickupManager = new PickupManager(pickups);
         pickupRenderer = new PickupRenderer(_spriteBatch, textureManager);
@@ -98,21 +121,75 @@ public class Game1 : Game
         enemyRenderer = new EnemyRenderer(_spriteBatch, textureManager, enemies);
         expManager = new ExperienceManager(eventBus, nuggets, player);
         expRenderer = new ExperienceRenderer(_spriteBatch, textureManager, nuggets);
+        areaEffectManager = new AreaEffectManager(eventBus);
         gui = new(_spriteBatch, textureManager, _screenSize, player);
     }
     public bool Pause = false;
     public bool prev_p = false;
-    protected override void Update(GameTime gameTime)
+
+
+    int scroll = 0;
+
+    private void AdjustZoom()
     {
-        if (!IsActive) return;
-        var k = Keyboard.GetState();
-        var m = Mouse.GetState();
-        if (m.LeftButton == ButtonState.Pressed)
+        var state = Mouse.GetState();
+
+        float zoomPerTick = 0.01f;
+        if (state.ScrollWheelValue > scroll)
         {
-            Console.WriteLine("Click");
+            _camera.ZoomIn(zoomPerTick);
+        }
+        if (state.ScrollWheelValue < scroll)
+        {
+            _camera.ZoomOut(zoomPerTick);
+        }
+        scroll = state.ScrollWheelValue;
+    }
+
+    private void CameraFollow(float dt, Vector2 target)
+    {
+        var d = Vector2.Distance(target, _camera.Position);
+        if (d > 10)
+        {
+            _camera.Position = Vector2.Lerp(target, _camera.Position, .991f);
+        }
+        else
+        if (d > 5)
+        {
+            _camera.Position = Vector2.Lerp(target, _camera.Position, .92f);
+        }
+        else
+        if (d > 1)
+        {
+            _camera.Position = Vector2.Lerp(target, _camera.Position, .9f);
         }
 
-        inputManager.Update(k, m);
+    }
+    protected override void Update(GameTime gameTime)
+    {
+        var dt = (float)gameTime.ElapsedGameTime.TotalSeconds;
+        if (!IsActive) return;
+
+        eventBus.Drain(); // Drain all the events emitted on the previous frame
+        CameraFollow(dt, player.Position - _screenSize / 2);
+        AdjustZoom();
+        var k = Keyboard.GetState();
+        var m = Mouse.GetState();
+
+
+        if (k.IsKeyDown(Keys.R))
+        {
+            BulletRegistry.Instance.Reset();
+        }
+
+        if (inputManager.current.Next)
+        {
+
+            eventBus.Publish<WeaponPickupEvent>(new WeaponPickupEvent((player.weapon.CurrentBullet.BulletType + 1) % (BulletRegistry.Instance.RegisteredBullets.Count ), 0, player.EntityId));
+        }
+
+
+        inputManager.Update(k, m, _camera);
 
         var c = k.IsKeyDown(Keys.P);
         if (c != prev_p && c)
@@ -124,14 +201,16 @@ public class Game1 : Game
         if (GamePad.GetState(PlayerIndex.One).Buttons.Back == ButtonState.Pressed || Keyboard.GetState().IsKeyDown(Keys.Escape))
             Exit();
         if (Pause) return;
-        var dt = (float)gameTime.ElapsedGameTime.TotalSeconds;
 
 
         player.Update(inputManager, dt);
 
         bulletSpawner.Update(dt);
+        // this is a test. Monogame Extended has a small ECS embedded, and I have no idea of how it behaves, so I am testing it with the bullets.
+        bulletEcsManager.Update(gameTime);
         pickupSpawner.Update(dt);
         pickupManager.Update(dt);
+        areaEffectManager.Update(dt);
         enemyManager.Update(dt, player.Position);
 
         // TODO: Add your update logic here
@@ -143,11 +222,26 @@ public class Game1 : Game
                 var enemyBox = enemy.Position.ToCenteredBoundingBox(enemy.Size);
                 if (collisionManager.CheckCollision(box, enemyBox))
                 {
-                    eventBus.Publish<BulletCollisionEvent>(new BulletCollisionEvent(b.EntityId, enemy.EntityId));
+                    eventBus.Publish<BulletCollisionEvent>(new BulletCollisionEvent(b.EntityId, enemy.EntityId, b.Damage));
                 }
 
             }
         }
+
+        // inefficient, but I need it working now
+        foreach (var a in areaEffectManager.Areas.Where(x => x.IsCollider))
+        {
+            foreach (var enemy in enemies)
+            {
+                var enemyBox = enemy.Position.ToCenteredBoundingBox(enemy.Size);
+                if (collisionManager.CheckCollision(a.BoundingBox, enemyBox))
+                {
+                    eventBus.Publish<AreaCollisionEvent>(new AreaCollisionEvent(a.EntityId, enemy.EntityId, a.Damage));
+                }
+
+            }
+        }
+
 
         foreach (var x in pickups)
         {
@@ -186,7 +280,7 @@ public class Game1 : Game
         }
 
         expManager.Update(dt);
-        eventBus.Drain();
+
         base.Update(gameTime);
     }
 
@@ -195,9 +289,12 @@ public class Game1 : Game
         GraphicsDevice.Clear(Color.CornflowerBlue);
 
         // TODO: Add your drawing code here
-        _spriteBatch.Begin();
+        var transformMatrix = _camera.GetViewMatrix();
+        _spriteBatch.Begin(transformMatrix: transformMatrix);
         player.DebugDraw(_spriteBatch, inputManager, textureManager.GetTexture("player"));
+        areaEffectManager.Render(_spriteBatch, textureManager);
         playerRenderer.Render(player, Color.LawnGreen);
+        bulletEcsManager.Draw(gameTime);// the new renderer
         foreach (var b in bullets)
         {
             bulletRenderer.Render(b);
@@ -208,7 +305,9 @@ public class Game1 : Game
         }
         expRenderer.Render();
         enemyRenderer.Render();
-
+        _spriteBatch.End();
+        // the ui is on another thread
+        _spriteBatch.Begin();
         gui.Render();
 
         _spriteBatch.End();

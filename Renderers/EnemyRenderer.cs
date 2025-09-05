@@ -27,7 +27,7 @@ public class EnemyRenderer
         {
             // draw bounding box too
 
-
+            UIHelpers.RenderHorizontalBar(enemy.Position + new Vector2(-enemy.Size.X/2, enemy.Size.Y), enemy.Size.X, 5, enemy.Life / enemy.MaxLife);
             _spriteBatch.Draw(
                 tex,
                 enemy.Position.ToBoundingBox(enemy.Size),

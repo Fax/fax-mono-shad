@@ -1,5 +1,6 @@
 
 using Microsoft.Xna.Framework.Input;
+using MonoGame.Extended;
 
 public record InputState
 {
@@ -19,9 +20,14 @@ public record InputState
     public bool MiddleHold = false;
 
     public bool Shoot = false;
+
     public bool Dash = false;
 
-    public Point MousePosition;
+    public bool Next = false;
+
+    public Vector2 MousePosition;
+
+    public bool NextRelease = false;
 }
 
 public class InputManager
@@ -29,15 +35,23 @@ public class InputManager
     private InputState previous = new();
     public InputState current = new();
 
-    public void Update(KeyboardState state, MouseState mouseState)
+    public void Update(KeyboardState state, MouseState mouseState, Camera<Vector2> camera = null)
     {
-        
+
         current.Up = state.IsKeyDown(Keys.Up) || state.IsKeyDown(Keys.W);
         current.Down = state.IsKeyDown(Keys.Down) || state.IsKeyDown(Keys.S);
         current.Left = state.IsKeyDown(Keys.Left) || state.IsKeyDown(Keys.A);
         current.Right = state.IsKeyDown(Keys.Right) || state.IsKeyDown(Keys.D);
         current.Space = state.IsKeyDown(Keys.Space);
+
         current.SpacePulse = current.Space && !previous.Space;
+        var plus = state.IsKeyDown(Keys.OemPlus);
+        var plusUp = state.IsKeyUp(Keys.OemPlus);
+        current.NextRelease = plusUp;
+        current.Next = plus && !previous.Next && previous.NextRelease; // it's down, it wasn't down, and it wasn't released.
+
+
+
         current.SpaceHold = current.Space && previous.Space;
 
 
@@ -47,8 +61,18 @@ public class InputManager
         current.LeftHold = current.LeftClick && previous.LeftClick;
         current.RightHold = current.RightHold && previous.RightHold;
         current.MiddleHold = current.MiddleHold && previous.MiddleHold;
-        current.MousePosition = mouseState.Position;
-        current.Shoot = (current.LeftClick && !current.LeftHold);
+        if (camera != null)
+        {
+            current.MousePosition = camera.ScreenToWorld(mouseState.Position.ToVector2());
+        }
+        else
+        {
+
+            current.MousePosition = mouseState.Position.ToVector2();
+        }
+
+        current.Shoot = current.LeftClick; // let allow rapid fire./
+        
         current.Dash = current.SpacePulse;
 
         previous = current with { };

@@ -26,17 +26,22 @@ public class PickupSpawner : ISpawner<PickupEntity>
     }
     public void Update(float dt)
     {
+        var reg = BulletRegistry.Instance;
         Counter += dt;
         if (Counter >= TimeToSpawn)
         {
             Counter = 0.0f;
             _entities.Clear();
-            var w = new WeaponPickup((int)Rnd.NextInt64(0, 2))
+
+            var b = reg.RegisteredBullets.ElementAt((int)Rnd.NextInt64(0, reg.RegisteredBullets.Count));
+
+            var w = new WeaponPickup(b)
             {
                 Position = new Vector2(
                     Rnd.NextSingle() * 800.0f,
                     Rnd.NextSingle() * 700.0f
                 ),
+                
             };
 
             _entities.Add(w);
