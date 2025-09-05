@@ -98,12 +98,13 @@ public record ExplosiveBullet : Bullet
     {
         Label = "Exp";
         BulletType = 1;
-        Friction = 10.5f;
         Damage = 10.0f;
-        BulletSpeed = 10f;
-        SplashDamageRange = 50.0f;
+        Life = .5f;
+        Friction = 15.5f;
+        BulletSpeed = 20f;
+        SplashDamageRange = 120.0f;
         SplashDamage = 0.1f;
-        Cooldown = 0.1f;
+        Cooldown = 1f;
 
     }
 }

@@ -291,7 +291,7 @@ public class Game1 : Game
         // TODO: Add your drawing code here
         var transformMatrix = _camera.GetViewMatrix();
         _spriteBatch.Begin(transformMatrix: transformMatrix);
-        player.DebugDraw(_spriteBatch, inputManager, textureManager.GetTexture("player"));
+        
         areaEffectManager.Render(_spriteBatch, textureManager);
         playerRenderer.Render(player, Color.LawnGreen);
         bulletEcsManager.Draw(gameTime);// the new renderer
@@ -305,6 +305,8 @@ public class Game1 : Game
         }
         expRenderer.Render();
         enemyRenderer.Render();
+
+        player.DebugDraw(_spriteBatch, inputManager, textureManager.GetTexture("player"));
         _spriteBatch.End();
         // the ui is on another thread
         _spriteBatch.Begin();

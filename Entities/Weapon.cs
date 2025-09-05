@@ -5,7 +5,7 @@ using System.Collections.Specialized;
 public class Weapon
 {
     private readonly EventBus _bus;
-    float _t;
+    public float CooldownTimer;
     public Bullet CurrentBullet;
     private BulletRegistry _reg;
 
@@ -17,7 +17,7 @@ public class Weapon
         var b = _reg.RegisteredBullets.First(x => x.BulletType == 0);
         CurrentBullet = b;
     }
-    public void Update(float dt) => _t = MathF.Max(0, _t - dt);
+    public void Update(float dt) => CooldownTimer = MathF.Max(0, CooldownTimer - dt);
     void OnPickup(WeaponPickupEvent e)
     {
         var b = _reg.RegisteredBullets.First(x => x.BulletType == e.BulletType);
@@ -25,8 +25,8 @@ public class Weapon
     }
     public void TryShoot(Vector2 origin, Vector2 direction)
     {
-        if (_t > 0) return;
-        _t = CurrentBullet.Cooldown;
+        if (CooldownTimer > 0) return;
+        CooldownTimer = CurrentBullet.Cooldown;
         _bus.Publish(new ShootEvent(origin, direction.Normalized(), CurrentBullet.BulletSpeed, CurrentBullet.BulletType));
         Sfx.PlayShoot();
     }

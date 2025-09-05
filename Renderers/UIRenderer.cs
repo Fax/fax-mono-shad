@@ -77,8 +77,12 @@ class UIRenderer
         Vector2 cooldownPosition = new(10, _screenSize.Y - 40);
         float cooldownLen = 100;
         float coolDownPerc = _player.DashCooldownCounter / _player.DashCooldown;
-
         UIHelpers.RenderHorizontalBar(cooldownPosition, cooldownLen, 10, coolDownPerc, inverted: true);
+
+
+        Vector2 shootCooldownTimerPosition = new(cooldownLen +50 , _screenSize.Y - 40);
+        float shootCoolDownPerc = _player.weapon.CooldownTimer / _player.weapon.CurrentBullet.Cooldown;
+        UIHelpers.RenderHorizontalBar(shootCooldownTimerPosition, cooldownLen, 10, shootCoolDownPerc, inverted: true);
 
         Vector2 gunPosition = new(10, _screenSize.Y - 60);
 

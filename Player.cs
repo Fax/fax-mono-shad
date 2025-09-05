@@ -7,6 +7,7 @@ using System.Runtime.CompilerServices;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
+using MonoGame.Extended;
 
 public enum PlayerMovementState
 {
@@ -82,7 +83,12 @@ public class Player
 
     public void DebugDraw(SpriteBatch _spritebatch, InputManager inputManager, Texture2D texture)
     {
-        _spritebatch.Draw(texture, inputManager.current.MousePosition.ToRectangle(new Vector2(15f)), Color.DarkRed);
+
+        _spritebatch.DrawCircle(inputManager.current.MousePosition, 8f, 10, Color.Black);
+        _spritebatch.DrawLine(inputManager.current.MousePosition - new Vector2(8f, 0), inputManager.current.MousePosition + new Vector2(8f, 0), Color.Black);
+        _spritebatch.DrawLine(inputManager.current.MousePosition - new Vector2( 0, 8f), inputManager.current.MousePosition + new Vector2(0, 8f), Color.Black);
+
+        // _spritebatch.Draw(texture, inputManager.current.MousePosition.ToRectangle(new Vector2(15f)), Color.DarkRed);
     }
 
     public void HandleNormal(InputManager inputManager, float dt, Vector2 aimDirection)
